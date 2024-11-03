@@ -1,40 +1,79 @@
 package io.droidme.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
+import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.client.MockRestServiceServer;
 
 import java.util.Objects;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@SpringBootTest
+@RestClientTest(PostService.class)
+@AutoConfigureWebClient(registerRestTemplate = true)
 class PostServiceTest {
 
     @Autowired
-    PostService service;
+    private MockRestServiceServer mockRestApi;
 
-    @Test
-    void serviceInjected() {
-        assertNotNull(service);
-    }
+    @Autowired
+    private ObjectMapper mapper;
+
+    @Autowired
+    private PostService service;
+
 
     @Test
     void testPost() {
+
+        mockRestApi.expect(requestTo("/posts/1"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(responseBody(), MediaType.APPLICATION_JSON));
+
         Post post = service.getPost(1);
-        assertEquals(1, post.getId());
+
+        assertThat(post).isEqualTo(
+                Post.builder()
+                        .id(1)
+                        .title("simple Post")
+                        .body("this is a simple post.")
+                        .build()
+        );
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {1,2,3})
-    void testPostEntity(int id) {
-        ResponseEntity<Post> postEntity = service.getPostEntity(id);
+    @Test
+    void testPostEntity() {
+
+        mockRestApi.expect(requestTo("/posts/1"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(responseBody(), MediaType.APPLICATION_JSON));
+
+        ResponseEntity<Post> postEntity = service.getPostEntity(1);
         assertEquals(200, postEntity.getStatusCode().value());
-        assertEquals(id, Objects.requireNonNull(postEntity.getBody()).getId());
+        assertEquals(1, Objects.requireNonNull(postEntity.getBody()).getId());
+    }
+
+    private String responseBody() {
+        Post post = Post.builder()
+                .id(1)
+                .title("simple Post")
+                .body("this is a simple post.")
+                .build();
+        try {
+            return this.mapper.writeValueAsString(post);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
