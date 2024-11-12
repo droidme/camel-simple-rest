@@ -2,8 +2,10 @@ package io.droidme.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.droidme.config.PostServiceConfigProperty;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.http.HttpMethod;
@@ -21,6 +23,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 @RestClientTest(PostService.class)
 @AutoConfigureWebClient(registerRestTemplate = true)
+@EnableConfigurationProperties(value = PostServiceConfigProperty.class)
 class PostServiceTest {
 
     @Autowired
